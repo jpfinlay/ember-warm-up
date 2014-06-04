@@ -1,6 +1,21 @@
-App = Ember.Application.create();
-
+var App = Ember.Application.create({
+  LOG_TRANSITIONS: true
+});
 App.Router.map(function() {
-  this.route('credits');
+  this.route('credits', { path: '/thanks' });
   this.route('about');
+});
+App.IndexController = Ember.Controller.extend({
+  productsCount: 6,
+  logo: 'images/logo-small.png',
+  time: function() {
+    return (new Date()).toDateString();
+  }.property()
+});
+App.AboutController = Ember.Controller.extend({
+  contactName: 'Jamie',
+  avatar: 'images/avatar.png',
+  open: function() {
+    return ((new Date()).getDay() === 0) ? "Sorry, Closed" : "We're Open";
+  }.property()
 });
