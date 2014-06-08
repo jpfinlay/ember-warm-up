@@ -46,7 +46,12 @@
         {{/link-to}}
       </p>
     </div>
-    <p class='pull-right text-muted'>Rendered on {{time}}</p> 
+    <p class='pull-right text-muted'>Rendered on {{time}}</p>
+    {{#each onSale}}
+      <p>{{#link-to 'product' this}}{{title}}{{/link-to}}</p>
+      <p>{{description}}</p>
+      <p>{{price}}</p>
+    {{/each}}
   </script>
   <script type='text/x-handlebars' data-template-name='contacts/index'>
     <div class='row'>

@@ -11,19 +11,28 @@ App.Router.map(function() {
   });
 });
 
-App.IndexController = Ember.Controller.extend({
-  productsCount: 6,
+App.IndexController = Ember.ArrayController.extend({
+  productsCount: Ember.computed.alias('length'),
   logo: 'images/logo-small.png',
   time: function() {
     return (new Date()).toDateString();
-  }.property()
+  }.property(),
+  onSale: function() {
+    return this.filterBy('isOnSale').slice(0,3); 
+}.property('@each.isOnSale')
 });
-App.ContactsIndexController = Ember.Controller.extend({
-  contactName: 'Anostagia',
+App.ContactsIndexController = Ember.ObjectController.extend({
+  contactName: Ember.computed.alias('name'),
   avatar: 'images/avatar.png',
   open: function() {
     return ((new Date()).getDay() === 0) ? "Closed" : "Open";
   }.property()
+});
+App.ProductsController = Ember.ArrayController.extend({
+  sortProperties: ['title']
+});
+App.ContactsController = Ember.ArrayController.extend({
+  sortProperties: ['name']
 });
 
 App.ProductsRoute = Ember.Route.extend({
@@ -34,6 +43,16 @@ App.ProductsRoute = Ember.Route.extend({
 App.ContactsRoute = Ember.Route.extend({
   model: function() {
     return this.store.findAll('contact');
+  }
+});
+App.IndexRoute = Ember.Route.extend({
+  model: function(){
+    return this.store.findAll('product');
+  }
+});
+App.ContactsIndexRoute = Ember.Route.extend({
+  model: function() {
+    return this.store.find('contact', 201);
   }
 });
 
