@@ -41,9 +41,27 @@ App.ReviewsController = Ember.ArrayController.extend({
   sortProperties: ['reviewedAt'],
   sortAscending: false
 });
-
 App.ContactProductsController = Ember.ArrayController.extend({
   sortProperties: ['title']
+});
+App.ProductController = Ember.ObjectController.extend({
+  ratings: [1,2,3,4,5],
+  isNotReviewed: Ember.computed.alias('review.isNew'),
+  review: function(){
+    return this.store.createRecord('review',{
+      product: this.get('model')
+    });
+  }.property('model'),
+  actions: {
+    createReview: function(){
+      var controller = this;
+      this.get('review').set('reviewedAt', new Date());
+      this.get('review').save().then(function(review){
+        controller.get('model.reviews')
+                  .addObject(review);
+      });
+    }
+  }
 });
 
 App.ProductsRoute = Ember.Route.extend({
@@ -79,6 +97,17 @@ App.ProductsDealsRoute = Ember.Route.extend({
   }
 });
 
+App.ReviewView = Ember.View.extend({
+  isExpanded: false,
+  classNameBindings: ['isExpanded', 'readMore'],
+  click: function(){
+    this.toggleProperty('isExpanded');
+  },
+  readMore: function(){
+    return this.get('length') > 140;
+  }.property('length')
+});
+
 App.ProductDetailsComponent = Ember.Component.extend({
  reviewsCount: Ember.computed.alias('product.reviews.length'),
   hasReviews: function(){
@@ -105,7 +134,13 @@ App.Product = DS.Model.extend({
   isOnSale: DS.attr('boolean'),
   image: DS.attr('string'),
   reviews: DS.hasMany('review', { async: true }),
-  crafter: DS.belongsTo('contact', { async: true })
+  crafter: DS.belongsTo('contact', { async: true }),
+  rating: function() {
+    if(this.get('reviews.length') === 0) { return 0; }
+    return this.get('reviews').reduce(function(previousValue, review) {
+      return previousValue + review.get('rating');
+    }, 0) / this.get('reviews.length');
+  }.property('reviews.@each.rating')
 });
 
 App.Product.FIXTURES = [
@@ -196,15 +231,34 @@ App.Contact.FIXTURES = [
 App.Review = DS.Model.extend({
   text: DS.attr('string'),
   reviewedAt: DS.attr('date'),
-  product: DS.belongsTo('product')
+  product: DS.belongsTo('product'),
+  rating: DS.attr('number')
 });
 App.Review.FIXTURES = [
   {
-    id: 100, 
-    text: "Started a fire in no time!"
+    id: 100,
+    reviewedAt: new Date('12/10/2013').getTime(),
+    text: "Started a fire in no time!",
+    rating: 4
   },
   {
-    id: 101, 
-    text: "Not the brightest flame, but warm!"
+    id: 101,
+    reviewedAt: new Date('12/12/2013').getTime(),
+    text: "Not the brightest flame, but warm!",
+    rating: 5
+  },
+  {
+    id: 102,
+    reviewedAt: new Date('12/30/2013').getTime(),
+    text: "This is some amazing Flint! It lasts **forever** and works even when damp! I still remember the first day when I was only a little fire sprite and got one of these in my flame stalking for treemas. My eyes lit up the moment I tried it! Here's just a few uses for it:\n\n* Create a fire using just a knife and kindling!\n* Works even after jumping in a lake (although, that's suicide for me)\n* Small enough to fit in a pocket -- if you happen to wear pants\n\n\nYears later I'm still using the _same one_. That's the biggest advantage of this -- it doesn't run out easily like matches. As long as you have something to strike it against, **you can start a fire anywhere** you have something to burn!",
+    rating: 5
   }
 ];
+
+Ember.Handlebars.registerBoundHelper('markdown', function(text) {
+ return new Handlebars.SafeString(markdown.toHTML(text)); 
+});
+
+Ember.Handlebars.registerBoundHelper('money', function(value) {
+ return accounting.formatMoney(value/100); 
+});
